@@ -1,0 +1,242 @@
+
+
+7.24
+MariaDB [(none)]> create database EmpDepartDB;
+Query OK, 1 row affected (0.009 sec)
+
+MariaDB [(none)]> use EmpDepartDB;
+Database changed
+
+MariaDB [EmpDepartDB]> create table Employee(empNo varchar(10) primary key, fName varchar(50) not null, lName varchar(50) not null, address varchar(120), DOB date not null, sex char(1) check(sex in ('M', 'F')), emPposition varchar(20) check(emPposition in ('Manager', 'Team Leader', 'Analysts', 'Software Developer')), deptNo varchar(10));
+Query OK, 0 rows affected (0.044 sec)
+
+MariaDB [EmpDepartDB]> create table Department(deptNo varchar(10) primary key, deptName varchar(70) not null, mgrEmpNo varchar(10) not null, foreign key(mgrEmpNo) references Employee(empNo));
+Query OK, 0 rows affected (0.008 sec)
+
+MariaDB [EmpDepartDB]> create table Project(projNo varchar(10) primary key, projName varchar(100) not null, deptNo varchar(10), foreign key(deptNo) references Department(deptNo));
+Query OK, 0 rows affected (0.009 sec)
+
+
+MariaDB [EmpDepartDB]>  create table WorksOn(empNo varchar(10), projNo varchar(10), dateWorked date, hoursWorked decimal(10, 2) check(hoursWorked between 0 and 40), primary key(empNo, projNo, dateWorked), foreign key(empNo) references Employee(empNo), foreign key(projNo) references Project(projNo));
+Query OK, 0 rows affected (0.009 sec)
+
+##Populating tables 
+MariaDB [EmpDepartDB]> INSERT INTO Employee VALUES
+    -> ('E001','John','Mensah','Accra','1990-05-10','M','Manager','D001'),
+    -> ('E002','Ama','Owusu','Kumasi','1992-08-15','F','Team Leader','D001'),
+    -> ('E003','Kwame','Asare','Takoradi','1995-02-20','M','Software Developer','D002'),
+    -> ('E004','Akosua','Boateng','Cape Coast','1993-11-25','F','Analysts','D002'),
+    -> ('E005','Yaw','Ofori','Tamale','1998-04-18','M','Software Developer','D003'),
+    -> ('E006','Abena','Sarpong','Accra','1991-09-12','F','Manager','D003'),
+    -> ('E007','Kojo','Bonsu','Tema','1994-03-30','M','Team Leader','D001'),
+    -> ('E008','Efua','Nkrumah','Sunyani','1996-07-22','F','Analysts','D002'),
+    -> ('E009','Kofi','Darko','Ho','1997-12-01','M','Software Developer','D003'),
+    -> ('E010','Adjoa','Amoah','Accra','1999-06-14','F','Analysts','D001');
+Query OK, 10 rows affected (0.012 sec)
+Records: 10  Duplicates: 0  Warnings: 0
+
+
+
+MariaDB [EmpDepartDB]> INSERT INTO Department VALUES
+    -> ('D001','Information Technology','E001'),
+    -> ('D002','Software Engineering','E002'),
+    -> ('D003','Research and Development','E006');
+Query OK, 3 rows affected (0.005 sec)
+Records: 3  Duplicates: 0  Warnings: 0
+
+MariaDB [EmpDepartDB]> INSERT INTO Project VALUES
+    -> ('P001','Student Management System','D001'),
+    -> ('P002','Hospital Management System','D002'),
+    -> ('P003','E-Commerce Platform','D001'),
+    -> ('P004','AI Research Project','D003'),
+    -> ('P005','Library System','D002'),
+    -> ('P006','Payroll System','D001'),
+    -> ('P007','Mobile Banking App','D003'),
+    -> ('P008','Inventory System','D002'),
+    -> ('P009','Learning Platform','D001'),
+    -> ('P010','Data Analytics Tool','D003');
+Query OK, 10 rows affected (0.005 sec)
+Records: 10  Duplicates: 0  Warnings: 0
+
+MariaDB [EmpDepartDB]> INSERT INTO WorksOn VALUES
+    -> ('E001','P001','2026-06-01',20.00),
+    -> ('E002','P003','2026-06-01',15.50),
+    -> ('E003','P002','2026-06-02',30.00),
+    -> ('E004','P005','2026-06-02',25.00),
+    -> ('E005','P004','2026-06-03',18.00),
+    -> ('E006','P007','2026-06-03',22.50),
+    -> ('E007','P006','2026-06-04',16.00),
+    -> ('E008','P008','2026-06-04',19.50),
+    -> ('E009','P010','2026-06-05',28.00),
+    -> ('E010','P009','2026-06-05',14.00),
+    -> ('E001','P003','2026-06-06',10.00),
+    -> ('E003','P005','2026-06-06',12.00);
+Query OK, 12 rows affected (0.005 sec)
+Records: 12  Duplicates: 0  Warnings: 0
+
+
+
+MariaDB [EmpDepartDB]> ALTER TABLE Employee
+    -> ADD CONSTRAINT fk_employee_department
+    -> FOREIGN KEY (deptNo)
+    -> REFERENCES Department(deptNo);
+Query OK, 10 rows affected (0.017 sec)
+Records: 10  Duplicates: 0  Warnings: 0
+
+
+
+7.25
+MariaDB [EmpDepartDB]> create view FemaleManagedProjects as select p.projNo, p.projName, p.deptNo from Project p join Department d on p.deptNo = d.deptNo join Employee e on d.mgrEmpNo = e.empNo where e.sex = 'F' and e.emPposition = 'Manager' order by p.projNo;
+Query OK, 0 rows affected (0.031 sec)
+MariaDB [EmpDepartDB]> select * from FemaleManagedProjects;
++--------+---------------------+--------+
+| projNo | projName            | deptNo |
++--------+---------------------+--------+
+| P004   | AI Research Project | D003   |
+| P007   | Mobile Banking App  | D003   |
+| P010   | Data Analytics Tool | D003   |
++--------+---------------------+--------+
+3 rows in set (0.004 sec)
+
+
+
+
+7.26
+
+MariaDB [EmpDepartDB]> create view EmployeeProjectView as select e.empNo, e.fName, e.lName, p.projName, w.hoursWorked from Employee e join WorksOn w on e.empNo = w.empNo join Project p on p.projNo = w.projNo;
+Query OK, 0 rows affected (0.030 sec)
+
+
+7.27
+
+a)MariaDB [EmpDepartDB]> select * from EmProject;
++-------+--------+------------+
+| empNo | projNo | totalHours |
++-------+--------+------------+
+| E001  | P001   |      20.00 |
+| E001  | P003   |      10.00 |
+| E002  | P003   |      15.50 |
+| E003  | P002   |      30.00 |
+| E003  | P005   |      12.00 |
+| E004  | P005   |      25.00 |
+| E005  | P004   |      18.00 |
+| E006  | P007   |      22.50 |
+| E007  | P006   |      16.00 |
+| E008  | P008   |      19.50 |
+| E009  | P010   |      28.00 |
+| E010  | P009   |      14.00 |
++-------+--------+------------+
+12 rows in set (0.027 sec)
+
+
+b)
+
+Before:
+   MariaDB [EmpDepartDB]> select projNo from EmProject where projNo = 'SCCS';
+Empty set (0.027 sec)
+After:
+
+MariaDB [EmpDepartDB]> select projNo from EmProject where projNo = 'P003';
++--------+
+| projNo |
++--------+
+| P003   |
+| P003   |
++--------+
+2 rows in set (0.001 sec)
+
+c)
+Before: Querying with 
+  MariaDB [EmpDepartDB]> select count(projNo) from EmProject where empNo = 'E1';
++---------------+
+| count(projNo) |
++---------------+
+|             0 |
++---------------+
+1 row in set (0.026 sec)
+
+After: replaced E1 with actual filled data of empNo = 'E001'
+ MariaDB [EmpDepartDB]> select count(projNo) from EmProject where               
+empNo = 'E001';
++---------------+
+| count(projNo) |
++---------------+
+|             2 |
++---------------+
+1 row in set (0.027 sec)
+
+d)
+MariaDB [EmpDepartDB]> select empNo, totalHours from EmProject group by empNo;
++-------+------------+
+| empNo | totalHours |
++-------+------------+
+| E001  |      20.00 |
+| E002  |      15.50 |
+| E003  |      30.00 |
+| E004  |      25.00 |
+| E005  |      18.00 |
+| E006  |      22.50 |
+| E007  |      16.00 |
+| E008  |      19.50 |
+| E009  |      28.00 |
+| E010  |      14.00 |
++-------+------------+
+10 rows in set (0.001 sec)
+
+
+7.28
+MariaDB [EmpDepartDB]> create table Part(partNo varchar(10), contract varchar(10), partCost decimal(10,2), primary key(partNo, contract));
+
+
+
+MariaDB [EmpDepartDB]> INSERT INTO Part VALUES
+    -> ('P001','C001',1200.00),
+    -> ('P001','C002',950.00),
+    -> ('P002','C001',800.00),
+    -> ('P002','C003',1500.00),
+    -> ('P003','C001',2000.00),
+    -> ('P003','C002',1800.00),
+    -> ('P004','C001',750.00),
+    -> ('P005','C001',1100.00),
+    -> ('P006','C002',500.00),
+    -> ('P007','C001',2500.00),
+    -> ('P008','C003',900.00),
+    -> ('P009','C002',1300.00),
+    -> ('P010','C001',1000.00);
+Query OK, 13 rows affected (0.005 sec)
+Records: 13  Duplicates: 0  Warnings: 0
+
+
+MariaDB [EmpDepartDB]> create view ExpensiveParts(partNo) as select distinct partNo from part where partCost>1000;
+Query OK, 0 rows affected (0.031 sec)
+
+
+MariaDB [EmpDepartDB]> SELECT * FROM ExpensiveParts;
++--------+
+| partNo |
++--------+
+| P001   |
+| P002   |
+| P003   |
+| P005   |
+| P007   |
+| P009   |
++--------+
+6 rows in set (0.028 sec)
+
+Maintaining:
+ When the an expensive part is inserted, it is added to the view table.
+In case of an update that raises the part Cost above 1000, it is added to the view table.
+deleting an expensive part must check if another contract for the same part exists.
+updating the part Cost and if it is below 1000, it must check if another expensive contract for the same part exists. 
+
+
+Without table(Part):
+ some updates can be handled without accessing the base table.
+   To delete and reduce cost will generally require checking the base table unless there is an extra summary information  given.
+
+
+
+
+
+
